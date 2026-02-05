@@ -22,7 +22,7 @@ def load_data():
     file_path = 'Mersey_Data_2025_Renamed.csv'
     
     if not os.path.exists(file_path):
-        # Fallback: Generate demo data
+        # Fallback data
         dates = pd.date_range(start='2025-01-01', periods=744, freq='H') 
         df = pd.DataFrame({
             'Time': dates,
@@ -39,10 +39,10 @@ def load_data():
         df = pd.read_csv(file_path)
         df['Time'] = pd.to_datetime(df['Time'])
 
-    # 1. Calculate Wind Speed
+    # 1. Calc Wind Speed
     df['Wind Speed'] = np.sqrt(df['10m u-component of wind']**2 + df['10m v-component of wind']**2)
     
-    # 2. Simulate Lil-Mamba Model Prediction
+    # 2. Simulate Lil-Mamba Prediction
     np.random.seed(42)
     noise = np.random.normal(0, 0.0682, size=len(df))
     df['Lil-Mamba Prediction'] = df['Sea Surface Height'] + noise
@@ -80,7 +80,6 @@ end_date = st.sidebar.date_input("End Date", min_date + pd.Timedelta(days=7))
 if start_date > end_date:
     st.sidebar.error("Error: Start Date must be before End Date.")
 
-# Filter Data
 mask = (df['Time'].dt.date >= start_date) & (df['Time'].dt.date <= end_date)
 df_filtered = df.loc[mask]
 
@@ -88,9 +87,7 @@ df_filtered = df.loc[mask]
 st.sidebar.markdown("---")
 st.sidebar.header("⚠️ Flood Warning System")
 
-# Cấu hình ngưỡng: Mặc định 3.7m
 default_threshold = 3.7
-
 st.sidebar.info(f"**Custom Threshold:** Fixed at {default_threshold}m")
 
 flood_threshold = st.sidebar.slider(
@@ -101,7 +98,7 @@ flood_threshold = st.sidebar.slider(
     step=0.1
 )
 
-# --- XỬ LÝ LOGIC TÌM NHIỀU ĐIỂM NGẬP ---
+# Logic tìm điểm ngập
 flood_events = pd.DataFrame()
 if not df_filtered.empty:
     flood_events = df_filtered[df_filtered['Lil-Mamba Prediction'] > flood_threshold].copy()
@@ -123,7 +120,7 @@ st.sidebar.info(
 st.title("🌊 Mersey MetOcean Data Analysis 2025 (Lil-Mamba Model)")
 st.markdown(f"**Viewing Data:** `{start_date}` to `{end_date}`")
 
-# --- HỘP CẢNH BÁO CHI TIẾT (ĐÃ BỎ INDEX) ---
+# --- ALERT BOX ---
 if is_flooding:
     num_hours = len(flood_events)
     max_level = flood_events['Lil-Mamba Prediction'].max()
@@ -134,20 +131,17 @@ if is_flooding:
         f"🌊 **Highest Peak:** {max_level:.2f} m"
     )
     
-    # Hiển thị danh sách các ngày giờ bị ngập
     with st.expander("🔻 View Detailed Flood Times (Click to expand)", expanded=True):
         display_df = flood_events[['Time', 'Lil-Mamba Prediction']].copy()
         display_df.columns = ['Time of Occurrence', 'Predicted Level (m)']
         display_df['Predicted Level (m)'] = display_df['Predicted Level (m)'].map('{:.2f}'.format)
         
-        # --- QUAN TRỌNG: hide_index=True để ẩn cột số thứ tự ---
         st.dataframe(
             display_df, 
             use_container_width=True, 
             height=200, 
-            hide_index=True  # <--- Đã thêm dòng này
+            hide_index=True 
         )
-
 else:
     st.success(f"✅ **SAFE:** No flood risk detected. Water levels are below {flood_threshold} m.")
 
@@ -186,7 +180,9 @@ with c2:
     
     p1 = ax2.plot(df_filtered['Time'], df_filtered['Sea Surface Height'], color='#9467bd', label='Observed Sea Level', linewidth=4, alpha=0.5)
     p2 = ax2.plot(df_filtered['Time'], df_filtered['Lil-Mamba Prediction'], color='#d62728', label='Lil-Mamba Prediction', linestyle='--', linewidth=1.5)
-    p3 = ax2.axhline(y=flood_threshold, color='red', linestyle='-', linewidth=2, label=f'Threshold ({flood_threshold}m)')
+    
+    # --- CẬP NHẬT: NÉT ĐỨT + MÀU ĐEN (DỄ NHÌN) ---
+    p3 = ax2.axhline(y=flood_threshold, color='black', linestyle='--', linewidth=2.5, label=f'Threshold ({flood_threshold}m)')
     
     # Fix Y-Axis Top to 4.21m
     ax2.set_ylim(top=4.21)

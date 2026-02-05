@@ -103,8 +103,9 @@ if dt_start_obs >= dt_end_obs:
     st.sidebar.error("⚠️ Error: Start Time must be before End Time!")
     dt_end_obs = dt_start_obs + timedelta(hours=24)
 
-# Calculate End Prediction (+3h after observation ends)
-dt_end_pred = dt_end_obs + timedelta(hours=3)
+# Calculate End Prediction (+2h after observation ends)
+# --- UPDATED: CHANGED FROM 3 TO 2 HOURS ---
+dt_end_pred = dt_end_obs + timedelta(hours=2)
 
 # Filter Data
 mask_obs = (df['Time'] >= dt_start_obs) & (df['Time'] <= dt_end_obs)
@@ -206,8 +207,8 @@ st.markdown("---")
 c_pad1, c_hero, c_pad2 = st.columns([1, 6, 1]) 
 
 with c_hero:
-    # Title
-    title_time = f"{dt_start_obs.strftime('%Hh %d/%m')} ➝ {dt_end_obs.strftime('%Hh %d/%m')} (Observed)"
+    # --- UPDATED TITLE: REMOVED "(Observed)" ---
+    title_time = f"{dt_start_obs.strftime('%Hh %d/%m')} ➝ {dt_end_obs.strftime('%Hh %d/%m')}"
     st.subheader(f"Sea Level: {title_time}")
 
     fig_hero, ax_hero = plt.subplots(figsize=(7, 3.5), dpi=2500)
@@ -230,7 +231,7 @@ with c_hero:
     p1_line = ax_hero.plot(
         df_obs['Time'], 
         df_obs['Sea Surface Height'], 
-        color='#d62728',  # <--- CHANGED TO RED
+        color='#d62728',  
         label='Observed Sea Level', 
         linewidth=2.5, 
         alpha=0.8,
@@ -246,23 +247,28 @@ with c_hero:
         p2_line = ax_hero.plot(
             df_pred_plot_line['Time'], 
             df_pred_plot_line['Lil-Mamba Prediction'], 
-            color='#9467bd', # <--- CHANGED TO PURPLE
+            color='#9467bd',
             label='Lil-Mamba Prediction', 
             linewidth=2.5,
             dashes=(3, 1), # Dense dashes
             marker=None
         )
         
-        # 3. DRAW MARKERS ON TOP (ONLY FOR OBSERVED DATA)
+        # 3. DRAW MARKERS ON TOP
+        # A. Markers for Observed data (All points)
         ax_hero.plot(df_obs['Time'], df_obs['Sea Surface Height'], **marker_style_yellow)
         
-        # Note: No markers for Prediction
+        # B. Marker for Prediction (ONLY THE LAST POINT)
+        # --- UPDATED: ADD ONE DOT AT THE END OF PREDICTION ---
+        last_pred_time = df_pred['Time'].iloc[-1]
+        last_pred_val = df_pred['Lil-Mamba Prediction'].iloc[-1]
+        ax_hero.plot(last_pred_time, last_pred_val, **marker_style_yellow)
 
     # 4. Threshold Line
     p3_line = ax_hero.axhline(y=flood_threshold, color='#FF6600', linewidth=2.5, linestyle='-', label=f'Threshold ({flood_threshold}m)')
 
-    # --- DUMMY PLOT FOR LEGEND ---
-    p_dot, = ax_hero.plot([], [], label='Hourly Data Point (Observed)', **marker_style_yellow)
+    # --- UPDATED: REMOVED "Hourly Data Point" LEGEND ---
+    # (No p_dot created)
 
     # Fix Y-Axis Top
     ax_hero.set_ylim(top=4.21)
@@ -272,7 +278,7 @@ with c_hero:
     ax_hero.tick_params(axis='both', which='major', labelsize=8)
 
     # Legend
-    lines = p1_line + p2_line + [p3_line] + [p_dot]
+    lines = p1_line + p2_line + [p3_line]
     labels_legend = [l.get_label() for l in lines]
     ax_hero.legend(
         lines, 
@@ -281,7 +287,7 @@ with c_hero:
         bbox_to_anchor=(0.5, -0.25), 
         fancybox=True, 
         shadow=True, 
-        ncol=4,
+        ncol=3, # Adjusted back to 3 cols since we removed the dot legend
         fontsize=8
     )
 

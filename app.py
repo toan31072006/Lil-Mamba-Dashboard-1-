@@ -143,10 +143,13 @@ flood_threshold = st.sidebar.slider(
     step=0.1
 )
 
-# Flood Logic
+# --- UPDATED FLOOD LOGIC (BASED ON SEA LEVEL CHART DATA) ---
 flood_events = pd.DataFrame()
-if not df_general.empty:
-    flood_events = df_general[df_general['Lil-Mamba Prediction'] > flood_threshold].copy()
+# Combine Observed and Predicted data for the Sea Level Chart
+df_sea_level_data = pd.concat([df_obs, df_pred])
+
+if not df_sea_level_data.empty:
+    flood_events = df_sea_level_data[df_sea_level_data['Lil-Mamba Prediction'] > flood_threshold].copy()
     is_flooding = not flood_events.empty
 else:
     is_flooding = False
@@ -171,7 +174,7 @@ if is_flooding:
     max_level = flood_events['Lil-Mamba Prediction'].max()
     
     st.error(
-        f"🚨 **DANGER: FLOOD WARNING DETECTED (In General View)!**\n\n"
+        f"🚨 **DANGER: FLOOD WARNING DETECTED (In Sea Level View)!**\n\n"
         f"Found **{num_hours} hours** where water level exceeds **{flood_threshold}m**.\n"
         f"🌊 **Highest Peak:** {max_level:.2f} m"
     )
@@ -188,7 +191,7 @@ if is_flooding:
             hide_index=True 
         )
 else:
-    st.success(f"✅ **SAFE:** No flood risk detected. Water levels are below {flood_threshold} m.")
+    st.success(f"✅ **SAFE:** No flood risk detected in the current Sea Level View (Below {flood_threshold} m).")
 
 # --- KPI METRICS ---
 kpi1, kpi2, kpi3, kpi4 = st.columns(4)

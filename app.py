@@ -6,7 +6,7 @@ import seaborn as sns
 import os
 from datetime import datetime, timedelta, time
 
-# --- 1. CẤU HÌNH TRANG ---
+# --- 1. PAGE CONFIGURATION ---
 st.set_page_config(
     page_title="Lil-Mamba Flood Dashboard",
     page_icon="🌊",
@@ -14,10 +14,10 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Thiết lập nền trắng
+# Set white background for charts
 sns.set_theme(style="whitegrid")
 
-# --- 2. LOAD DỮ LIỆU ---
+# --- 2. LOAD DATA ---
 @st.cache_data
 def load_data():
     file_path = 'Mersey_Data_2025_Renamed.csv'
@@ -70,15 +70,15 @@ df = load_data()
 # --- 3. SIDEBAR CONTROLS ---
 st.sidebar.title("🎛️ Control Panel")
 
-# --- PHẦN 1: SEA LEVEL FILTER (FLEXIBLE WINDOW) ---
+# --- PART 1: SEA LEVEL FILTER (FLEXIBLE WINDOW) ---
 st.sidebar.markdown("---")
 st.sidebar.header("1. Sea Level Config")
-st.sidebar.caption("Tùy chọn khoảng thời gian quan trắc:")
+st.sidebar.caption("Select Observation Window:") 
 
 min_db_date = df['Time'].min().date()
 max_db_date = df['Time'].max().date()
 
-# --- BẮT ĐẦU ---
+# --- START TIME ---
 st.sidebar.markdown("**Start Time:**")
 c1, c2 = st.sidebar.columns(2)
 with c1:
@@ -86,7 +86,7 @@ with c1:
 with c2:
     sea_start_time = st.number_input("Hour (0-23)", 0, 23, 14, key='sea_start_t')
 
-# --- KẾT THÚC ---
+# --- END TIME ---
 st.sidebar.markdown("**End Time:**")
 c3, c4 = st.sidebar.columns(2)
 with c3:
@@ -94,29 +94,29 @@ with c3:
 with c4:
     sea_end_time = st.number_input("Hour (0-23)", 0, 23, 14, key='sea_end_t')
 
-# Tính toán Timestamp
+# Calculate Timestamp
 dt_start_obs = datetime.combine(sea_start_date, time(sea_start_time, 0))
 dt_end_obs = datetime.combine(sea_end_date, time(sea_end_time, 0))
 
 # Validate
 if dt_start_obs >= dt_end_obs:
-    st.sidebar.error("⚠️ Lỗi: Thời gian Bắt đầu phải nhỏ hơn Kết thúc!")
+    st.sidebar.error("⚠️ Error: Start Time must be before End Time!")
     dt_end_obs = dt_start_obs + timedelta(hours=24)
 
-# Tính toán End Prediction (+3h sau khi kết thúc quan trắc)
+# Calculate End Prediction (+3h after observation ends)
 dt_end_pred = dt_end_obs + timedelta(hours=3)
 
-# Lọc dữ liệu
+# Filter Data
 mask_obs = (df['Time'] >= dt_start_obs) & (df['Time'] <= dt_end_obs)
 df_obs = df.loc[mask_obs]
 
 mask_pred = (df['Time'] > dt_end_obs) & (df['Time'] <= dt_end_pred)
 df_pred = df.loc[mask_pred]
 
-# --- PHẦN 2: GENERAL FILTER ---
+# --- PART 2: GENERAL FILTER ---
 st.sidebar.markdown("---")
 st.sidebar.header("2. General Analysis")
-st.sidebar.caption("Khoảng thời gian cho các biểu đồ khác:")
+st.sidebar.caption("Time range for other charts:") 
 
 gen_start_date = st.sidebar.date_input("From Date", min_db_date, key='gen_start')
 gen_end_date = st.sidebar.date_input("To Date", min_db_date + pd.Timedelta(days=7), key='gen_end')
@@ -142,7 +142,7 @@ flood_threshold = st.sidebar.slider(
     step=0.1
 )
 
-# Logic tìm điểm ngập
+# Flood Logic
 flood_events = pd.DataFrame()
 if not df_general.empty:
     flood_events = df_general[df_general['Lil-Mamba Prediction'] > flood_threshold].copy()
@@ -199,76 +199,75 @@ kpi4.metric("Avg Pressure", f"{df_general['Mean Sea Level Pressure'].mean():.0f}
 st.markdown("---")
 
 # ====================================================
-# PHẦN 1: BIỂU ĐỒ SEA LEVEL (HERO SECTION)
+# PART 1: SEA LEVEL CHART (HERO SECTION)
 # ====================================================
 
-# Layout [1, 6, 1] -> Cột giữa chiếm 75% chiều rộng
+# Layout [1, 6, 1]
 c_pad1, c_hero, c_pad2 = st.columns([1, 6, 1]) 
 
 with c_hero:
-    # Tiêu đề
+    # Title
     title_time = f"{dt_start_obs.strftime('%Hh %d/%m')} ➝ {dt_end_obs.strftime('%Hh %d/%m')} (Observed)"
     st.subheader(f"Sea Level: {title_time}")
 
     fig_hero, ax_hero = plt.subplots(figsize=(7, 3.5), dpi=2500)
 
-    # --- CẤU HÌNH MARKER MỚI (VÀNG NHẠT) ---
-    # Style cho việc vẽ chấm riêng biệt (không vẽ dòng)
+    # --- MARKER STYLE (LIGHT YELLOW) ---
     marker_style_yellow = dict(
         marker='o',
         markersize=5,
-        markerfacecolor='#FFFF99', # Vàng nhạt
-        markeredgecolor='black',   # Viền đen mỏng để nổi bật
+        markerfacecolor='#FFFF99', # Light Yellow
+        markeredgecolor='black',   # Black border
         markeredgewidth=0.5,
-        linestyle='None'           # Quan trọng: Chỉ vẽ chấm, không vẽ đường
+        linestyle='None'           # Only dots
     )
 
     # 1. Draw Danger Zone
     ax_hero.axhspan(flood_threshold, 10, color='red', alpha=0.1, label='Flood Zone')
 
-    # 2. VẼ ĐƯỜNG (LINES) TRƯỚC - KHÔNG CÓ MARKER
+    # 2. DRAW LINES FIRST
+    # Observed Sea Level -> RED (#d62728)
     p1_line = ax_hero.plot(
         df_obs['Time'], 
         df_obs['Sea Surface Height'], 
-        color='#9467bd', 
+        color='#d62728',  # <--- CHANGED TO RED
         label='Observed Sea Level', 
         linewidth=2.5, 
         alpha=0.8,
-        marker=None # Không chấm
+        marker=None
     )
     
     if not df_obs.empty and not df_pred.empty:
         last_obs = df_obs.iloc[[-1]]
-        # Tạo data nối để vẽ liền mạch
+        # Concat for smooth connection
         df_pred_plot_line = pd.concat([last_obs, df_pred])
+        
+        # Lil-Mamba Prediction -> PURPLE (#9467bd)
         p2_line = ax_hero.plot(
             df_pred_plot_line['Time'], 
             df_pred_plot_line['Lil-Mamba Prediction'], 
-            color='#d62728', 
+            color='#9467bd', # <--- CHANGED TO PURPLE
             label='Lil-Mamba Prediction', 
             linewidth=2.5,
-            dashes=(3, 1),
-            marker=None # Không chấm
+            dashes=(3, 1), # Dense dashes
+            marker=None
         )
         
-        # 3. VẼ CHẤM (MARKERS) SAU - XỬ LÝ GIAO ĐIỂM 1 CHẤM
-        # Vẽ toàn bộ chấm cho phần Observed (bao gồm cả điểm cuối cùng)
+        # 3. DRAW MARKERS ON TOP (ONLY FOR OBSERVED DATA)
         ax_hero.plot(df_obs['Time'], df_obs['Sea Surface Height'], **marker_style_yellow)
-
-        # Vẽ chấm cho phần Prediction, NHƯNG BỎ ĐIỂM ĐẦU TIÊN (vì đã được vẽ ở trên)
-        # df_pred chính là dữ liệu dự báo không bao gồm điểm nối, nên vẽ thẳng nó.
-        ax_hero.plot(df_pred['Time'], df_pred['Lil-Mamba Prediction'], **marker_style_yellow)
+        
+        # Note: No markers for Prediction
 
     # 4. Threshold Line
     p3_line = ax_hero.axhline(y=flood_threshold, color='#FF6600', linewidth=2.5, linestyle='-', label=f'Threshold ({flood_threshold}m)')
 
-    # --- TẠO CHÚ THÍCH RIÊNG CHO CHẤM VÀNG ---
-    p_dot, = ax_hero.plot([], [], label='Hourly Data Point', **marker_style_yellow)
+    # --- DUMMY PLOT FOR LEGEND ---
+    p_dot, = ax_hero.plot([], [], label='Hourly Data Point (Observed)', **marker_style_yellow)
 
     # Fix Y-Axis Top
     ax_hero.set_ylim(top=4.21)
 
-    # Font chữ
+    # Fonts
     ax_hero.set_ylabel('Sea Level (m)', fontsize=9)
     ax_hero.tick_params(axis='both', which='major', labelsize=8)
 
@@ -286,17 +285,17 @@ with c_hero:
         fontsize=8
     )
 
-    # Ngày tháng nghiêng
+    # Rotated Date Ticks
     plt.xticks(rotation=30, fontsize=8) 
     st.pyplot(fig_hero)
 
 st.markdown("---")
 
 # ====================================================
-# PHẦN 2: CÁC BIỂU ĐỒ CÒN LẠI (GRID LAYOUT)
+# PART 2: OTHER CHARTS (GRID LAYOUT)
 # ====================================================
 
-# --- HÀNG 1 ---
+# --- ROW 1 ---
 c1, c2, c3 = st.columns(3)
 
 with c1:
@@ -332,7 +331,7 @@ with c3:
 
 st.markdown("---")
 
-# --- HÀNG 2 ---
+# --- ROW 2 ---
 c4, c5, c6 = st.columns(3)
 
 with c4:
@@ -370,7 +369,7 @@ with c6:
 
 st.markdown("---")
 
-# --- HÀNG 3 ---
+# --- ROW 3 ---
 c7, c8 = st.columns(2)
 
 with c7:

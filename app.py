@@ -158,24 +158,26 @@ st.markdown("---")
 # ====================================================
 st.subheader("Sea Level: Observed vs Lil-Mamba")
 
-# --- CẬP NHẬT: DPI=500 ĐỂ NÉT CĂNG ---
-fig_hero, ax_hero = plt.subplots(figsize=(3, 1.5), dpi=500)
+# --- CẬP NHẬT: KÍCH THƯỚC (8x2.5) + DPI 600 ---
+# Kích thước này đủ rộng để không bị mờ, nhưng đủ thấp (2.5) để trông "nhỏ gọn"
+fig_hero, ax_hero = plt.subplots(figsize=(8, 2.5), dpi=600)
 
 # Draw Danger Zone
 ax_hero.axhspan(flood_threshold, 10, color='red', alpha=0.1, label='Flood Zone')
 
-p1 = ax_hero.plot(df_filtered['Time'], df_filtered['Sea Surface Height'], color='#9467bd', label='Observed Sea Level', linewidth=2, alpha=0.5)
-p2 = ax_hero.plot(df_filtered['Time'], df_filtered['Lil-Mamba Prediction'], color='#d62728', label='Lil-Mamba Prediction', linestyle='--', linewidth=1)
+# Tăng linewidth để rõ nét hơn
+p1 = ax_hero.plot(df_filtered['Time'], df_filtered['Sea Surface Height'], color='#9467bd', label='Observed Sea Level', linewidth=2.5, alpha=0.5)
+p2 = ax_hero.plot(df_filtered['Time'], df_filtered['Lil-Mamba Prediction'], color='#d62728', label='Lil-Mamba Prediction', linestyle='--', linewidth=1.5)
 
 # Nét liền + Màu Cam
-p3 = ax_hero.axhline(y=flood_threshold, color='#FF6600', linewidth=2, linestyle='-', label=f'Threshold ({flood_threshold}m)')
+p3 = ax_hero.axhline(y=flood_threshold, color='#FF6600', linewidth=2.5, linestyle='-', label=f'Threshold ({flood_threshold}m)')
 
 # Fix Y-Axis Top
 ax_hero.set_ylim(top=4.21)
 
-# --- THU NHỎ CHỮ ---
-ax_hero.set_ylabel('Sea Level (m)', fontsize=5)
-ax_hero.tick_params(axis='both', which='major', labelsize=4)
+# --- FONT CHỮ CÂN ĐỐI ---
+ax_hero.set_ylabel('Sea Level (m)', fontsize=8)
+ax_hero.tick_params(axis='both', which='major', labelsize=7)
 
 lines = p1 + p2 + [p3]
 labels_legend = [l.get_label() for l in lines]
@@ -183,14 +185,15 @@ ax_hero.legend(
     lines, 
     labels_legend, 
     loc='upper center', 
-    bbox_to_anchor=(0.5, -0.3), 
+    bbox_to_anchor=(0.5, -0.3), # Vị trí hợp lý
     fancybox=True, 
     shadow=True, 
     ncol=3,
-    fontsize=4 
+    fontsize=7 # Font vừa đủ đọc
 )
 
-plt.xticks(rotation=30, fontsize=4) 
+# Ngày tháng nghiêng
+plt.xticks(rotation=30, fontsize=7) 
 st.pyplot(fig_hero)
 
 st.markdown("---")
@@ -204,7 +207,7 @@ c1, c2, c3 = st.columns(3)
 
 with c1:
     st.subheader("Seawater Temperature Evolution")
-    # Tăng DPI các biểu đồ phụ lên 300
+    # Tăng DPI cho tất cả biểu đồ con
     fig1, ax1 = plt.subplots(figsize=(6, 4), dpi=300)
     ax1.plot(df_filtered['Time'], df_filtered['Potential Temperature'], label='Surface Temp', color='#ff7f0e', linewidth=2)
     ax1.plot(df_filtered['Time'], df_filtered['Bottom Temperature'], label='Bottom Temp', color='#1f77b4', linestyle='--', linewidth=2)

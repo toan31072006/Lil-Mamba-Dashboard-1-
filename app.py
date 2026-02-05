@@ -159,8 +159,8 @@ st.markdown("---")
 # ====================================================
 st.subheader("Sea Level: Observed vs Lil-Mamba")
 
-# Kích thước 9x3.5 (Nhỏ gọn ~30% so với gốc)
-fig_hero, ax_hero = plt.subplots(figsize=(9, 3.5))
+# --- CẬP NHẬT: KÍCH THƯỚC NHỎ HƠN 20% (7x3) ---
+fig_hero, ax_hero = plt.subplots(figsize=(7, 3))
 
 # Draw Danger Zone
 ax_hero.axhspan(flood_threshold, 10, color='red', alpha=0.1, label='Flood Zone')
@@ -175,20 +175,9 @@ p3 = ax_hero.axhline(y=flood_threshold, color='#FF6600', linewidth=3, linestyle=
 ax_hero.set_ylim(top=4.21)
 
 ax_hero.set_ylabel('Sea Level (m)')
-
-# --- FIX LỖI ĐÈ CHỮ: Đẩy Legend xuống thấp hơn (-0.35) ---
 lines = p1 + p2 + [p3]
 labels_legend = [l.get_label() for l in lines]
-ax_hero.legend(
-    lines, 
-    labels_legend, 
-    loc='upper center', 
-    bbox_to_anchor=(0.5, -0.35),  # <-- Đã chỉnh xuống thấp hơn (-0.15 -> -0.35)
-    fancybox=True, 
-    shadow=True, 
-    ncol=3
-)
-
+ax_hero.legend(lines, labels_legend, loc='upper center', bbox_to_anchor=(0.5, -0.35), fancybox=True, shadow=True, ncol=3)
 plt.xticks(rotation=20)
 st.pyplot(fig_hero)
 

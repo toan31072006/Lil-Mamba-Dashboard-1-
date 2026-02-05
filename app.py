@@ -173,9 +173,9 @@ p3 = ax_hero.axhline(y=flood_threshold, color='#FF6600', linewidth=3, linestyle=
 # Fix Y-Axis Top
 ax_hero.set_ylim(top=4.21)
 
-# --- THU NHỎ CHỮ ---
-ax_hero.set_ylabel('Sea Level (m)', fontsize=9) # Chữ trục nhỏ
-ax_hero.tick_params(axis='both', which='major', labelsize=8) # Chữ số nhỏ
+# --- THU NHỎ CHỮ & XOAY NGÀY THÁNG ---
+ax_hero.set_ylabel('Sea Level (m)', fontsize=9)
+ax_hero.tick_params(axis='both', which='major', labelsize=8)
 
 lines = p1 + p2 + [p3]
 labels_legend = [l.get_label() for l in lines]
@@ -187,10 +187,11 @@ ax_hero.legend(
     fancybox=True, 
     shadow=True, 
     ncol=3,
-    fontsize=8 # Chữ chú thích nhỏ
+    fontsize=8 
 )
 
-plt.xticks(rotation=20, fontsize=8) # Chữ ngày tháng nhỏ
+# Xoay ngày tháng 30 độ
+plt.xticks(rotation=30, fontsize=8) 
 st.pyplot(fig_hero)
 
 st.markdown("---")
@@ -210,7 +211,8 @@ with c1:
     ax1.set_ylabel('Temperature (°C)', fontsize=9)
     ax1.tick_params(labelsize=8)
     ax1.legend(fontsize=8)
-    plt.xticks(rotation=20, fontsize=8)
+    # Xoay ngày tháng 30 độ
+    plt.xticks(rotation=30, fontsize=8)
     st.pyplot(fig1)
 
 with c2:
@@ -230,7 +232,8 @@ with c3:
     ax4.fill_between(df_filtered['Time'], df_filtered['Wind Speed'], color='#d62728', alpha=0.1)
     ax4.set_ylabel('Speed (m/s)', fontsize=9)
     ax4.tick_params(labelsize=8)
-    plt.xticks(rotation=20, fontsize=8)
+    # Xoay ngày tháng 30 độ
+    plt.xticks(rotation=30, fontsize=8)
     st.pyplot(fig4)
 
 st.markdown("---")
@@ -244,7 +247,8 @@ with c4:
     ax5.plot(df_filtered['Time'], df_filtered['Mean Sea Level Pressure'], color='#8c564b', linewidth=2)
     ax5.set_ylabel('Pressure (Pa)', fontsize=9)
     ax5.tick_params(labelsize=8)
-    plt.xticks(rotation=20, fontsize=8)
+    # Xoay ngày tháng 30 độ
+    plt.xticks(rotation=30, fontsize=8)
     st.pyplot(fig5)
 
 with c5:

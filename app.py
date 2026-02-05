@@ -13,7 +13,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Apply Seaborn style globally
+# Thiết lập nền trắng cho biểu đồ
 sns.set_theme(style="whitegrid")
 
 # --- 2. LOAD DỮ LIỆU ---
@@ -155,14 +155,42 @@ kpi4.metric("Avg Pressure", f"{df_filtered['Mean Sea Level Pressure'].mean():.0f
 st.markdown("---")
 
 # ====================================================
-# 3x3 GRID LAYOUT
+# PHẦN 1: BIỂU ĐỒ QUAN TRỌNG NHẤT (HERO SECTION)
+# ====================================================
+st.subheader("Sea Level: Observed vs Lil-Mamba") # Đã xóa số thứ tự
+
+fig_hero, ax_hero = plt.subplots(figsize=(12, 5)) # Tăng kích thước
+
+# Draw Danger Zone
+ax_hero.axhspan(flood_threshold, 10, color='red', alpha=0.1, label='Flood Zone')
+
+p1 = ax_hero.plot(df_filtered['Time'], df_filtered['Sea Surface Height'], color='#9467bd', label='Observed Sea Level', linewidth=4, alpha=0.5)
+p2 = ax_hero.plot(df_filtered['Time'], df_filtered['Lil-Mamba Prediction'], color='#d62728', label='Lil-Mamba Prediction', linestyle='--', linewidth=1.5)
+
+# Nét liền màu cam
+p3 = ax_hero.axhline(y=flood_threshold, color='#FF6600', linewidth=3, linestyle='-', label=f'Threshold ({flood_threshold}m)')
+
+# Fix Y-Axis Top
+ax_hero.set_ylim(top=4.21)
+
+ax_hero.set_ylabel('Sea Level (m)')
+lines = p1 + p2 + [p3]
+labels_legend = [l.get_label() for l in lines]
+ax_hero.legend(lines, labels_legend, loc='upper center', bbox_to_anchor=(0.5, -0.15), fancybox=True, shadow=True, ncol=3)
+plt.xticks(rotation=20)
+st.pyplot(fig_hero)
+
+st.markdown("---")
+
+# ====================================================
+# PHẦN 2: CÁC BIỂU ĐỒ CÒN LẠI (GRID LAYOUT)
 # ====================================================
 
-# --- ROW 1 ---
+# --- HÀNG 1 (CÁC BIỂU ĐỒ PHỤ) ---
 c1, c2, c3 = st.columns(3)
 
 with c1:
-    st.subheader("1. Seawater Temperature Evolution")
+    st.subheader("Seawater Temperature Evolution")
     fig1, ax1 = plt.subplots(figsize=(6, 4))
     ax1.plot(df_filtered['Time'], df_filtered['Potential Temperature'], label='Surface Temp', color='#ff7f0e', linewidth=2)
     ax1.plot(df_filtered['Time'], df_filtered['Bottom Temperature'], label='Bottom Temp', color='#1f77b4', linestyle='--', linewidth=2)
@@ -172,30 +200,7 @@ with c1:
     st.pyplot(fig1)
 
 with c2:
-    st.subheader("2. Sea Level: Observed vs Lil-Mamba")
-    fig2, ax2 = plt.subplots(figsize=(6, 4))
-    
-    # Draw Danger Zone
-    ax2.axhspan(flood_threshold, 10, color='red', alpha=0.1, label='Flood Zone')
-    
-    p1 = ax2.plot(df_filtered['Time'], df_filtered['Sea Surface Height'], color='#9467bd', label='Observed Sea Level', linewidth=4, alpha=0.5)
-    p2 = ax2.plot(df_filtered['Time'], df_filtered['Lil-Mamba Prediction'], color='#d62728', label='Lil-Mamba Prediction', linestyle='--', linewidth=1.5)
-    
-    # --- CẬP NHẬT: NÉT LIỀN (SOLID) + MÀU CAM ---
-    p3 = ax2.axhline(y=flood_threshold, color='#FF6600', linewidth=3, linestyle='-', label=f'Threshold ({flood_threshold}m)')
-    
-    # Fix Y-Axis Top to 4.21m
-    ax2.set_ylim(top=4.21)
-    
-    ax2.set_ylabel('Sea Level (m)')
-    lines = p1 + p2 + [p3]
-    labels_legend = [l.get_label() for l in lines]
-    ax2.legend(lines, labels_legend, loc='upper center', bbox_to_anchor=(0.5, -0.15), fancybox=True, shadow=True, ncol=2)
-    plt.xticks(rotation=20)
-    st.pyplot(fig2)
-
-with c3:
-    st.subheader("3. Wave Direction Frequency")
+    st.subheader("Wave Direction Frequency")
     dir_order = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
     wave_counts = df_filtered['WaveDirCat'].value_counts().reindex(dir_order, fill_value=0)
     fig3, ax3 = plt.subplots(figsize=(6, 4))
@@ -203,13 +208,8 @@ with c3:
     ax3.set_ylabel('Count')
     st.pyplot(fig3)
 
-st.markdown("---")
-
-# --- ROW 2 ---
-c4, c5, c6 = st.columns(3)
-
-with c4:
-    st.subheader("4. Wind Speed (m/s)")
+with c3:
+    st.subheader("Wind Speed (m/s)")
     fig4, ax4 = plt.subplots(figsize=(6, 4))
     ax4.plot(df_filtered['Time'], df_filtered['Wind Speed'], color='#d62728', linewidth=1.5)
     ax4.fill_between(df_filtered['Time'], df_filtered['Wind Speed'], color='#d62728', alpha=0.1)
@@ -217,16 +217,21 @@ with c4:
     plt.xticks(rotation=20)
     st.pyplot(fig4)
 
-with c5:
-    st.subheader("5. Atmospheric Pressure (Pa)")
+st.markdown("---")
+
+# --- HÀNG 2 ---
+c4, c5, c6 = st.columns(3)
+
+with c4:
+    st.subheader("Atmospheric Pressure (Pa)")
     fig5, ax5 = plt.subplots(figsize=(6, 4))
     ax5.plot(df_filtered['Time'], df_filtered['Mean Sea Level Pressure'], color='#8c564b', linewidth=2)
     ax5.set_ylabel('Pressure (Pa)')
     plt.xticks(rotation=20)
     st.pyplot(fig5)
 
-with c6:
-    st.subheader("6. Sea State Proportions")
+with c5:
+    st.subheader("Sea State Proportions")
     sea_counts = df_filtered['SeaStateCat'].value_counts().sort_index()
     sea_counts = sea_counts[sea_counts > 0]
     
@@ -237,13 +242,8 @@ with c6:
     plt.setp(autotexts, size=8, weight="bold", color="white")
     st.pyplot(fig6)
 
-st.markdown("---")
-
-# --- ROW 3 ---
-c7, c8, c9 = st.columns(3)
-
-with c7:
-    st.subheader("7. Avg Surface Temp by Hour")
+with c6:
+    st.subheader("Avg Surface Temp by Hour")
     df['Hour'] = df['Time'].dt.hour
     hourly_stats = df.groupby('Hour')[['Potential Temperature']].mean()
     
@@ -254,8 +254,13 @@ with c7:
     ax7.set_xticks(range(0, 24, 4))
     st.pyplot(fig7)
 
-with c8:
-    st.subheader("8. Wave Direction vs Height")
+st.markdown("---")
+
+# --- HÀNG 3 ---
+c7, c8 = st.columns(2) # Chia 2 cột cho đẹp vì còn 2 biểu đồ
+
+with c7:
+    st.subheader("Wave Direction vs Height")
     fig8, ax8 = plt.subplots(figsize=(6, 4))
     scatter = ax8.scatter(df['Mean Wave Direction'], df['Significant Wave Height'], alpha=0.5, s=15, c=df['Significant Wave Height'], cmap='viridis')
     ax8.set_xlabel('Direction (°)')
@@ -263,12 +268,14 @@ with c8:
     plt.colorbar(scatter, ax=ax8, label='Height (m)')
     st.pyplot(fig8)
 
-with c9:
-    # GIỮ NGUYÊN THEO THÁNG NHƯ YÊU CẦU
-    st.subheader("9. Monthly Avg Temp")
-    monthly_temp = df.groupby('Month', sort=False)['Potential Temperature'].mean()
+with c8:
+    st.subheader("Daily Avg Temp (Theo Ngày)")
+    daily_temp = df_filtered.groupby(df_filtered['Time'].dt.date)['Potential Temperature'].mean()
     
     fig9, ax9 = plt.subplots(figsize=(6, 4))
-    sns.barplot(x=monthly_temp.index, y=monthly_temp.values, ax=ax9, palette='magma')
-    ax9.set_ylim(min(monthly_temp.values)*0.9, max(monthly_temp.values)*1.05)
+    sns.barplot(x=daily_temp.index, y=daily_temp.values, ax=ax9, palette='magma')
+    ax9.set_xticklabels([d.strftime('%d-%m') for d in daily_temp.index], rotation=45)
+    
+    if not daily_temp.empty:
+        ax9.set_ylim(min(daily_temp.values)*0.95, max(daily_temp.values)*1.05)
     st.pyplot(fig9)

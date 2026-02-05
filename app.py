@@ -16,7 +16,7 @@ st.set_page_config(
 # Apply Seaborn style globally
 sns.set_theme(style="whitegrid")
 
-# --- 2. DATA LOADING & PROCESSING ---
+# --- 2. LOAD DỮ LIỆU ---
 @st.cache_data
 def load_data():
     file_path = 'Mersey_Data_2025_Renamed.csv'
@@ -88,41 +88,27 @@ df_filtered = df.loc[mask]
 st.sidebar.markdown("---")
 st.sidebar.header("⚠️ Flood Warning System")
 
-# 1. Auto-Calculate Threshold (2.0x Mean Positive)
-yearly_positive_mean = df[df['Sea Surface Height'] > 0]['Sea Surface Height'].mean()
-auto_threshold = yearly_positive_mean * 2.0
+# Cấu hình ngưỡng: Mặc định 3.7m theo yêu cầu
+default_threshold = 3.7
 
-st.sidebar.info(
-    f"**Auto-Threshold Formula:**\n"
-    f"2.0 x {yearly_positive_mean:.2f}m (Yearly Pos. Mean)\n"
-    f"= **{auto_threshold:.2f}m**"
-)
+st.sidebar.info(f"**Custom Threshold:** Fixed at {default_threshold}m")
 
 flood_threshold = st.sidebar.slider(
     "Set Flood Threshold (m):", 
-    min_value=1.5, 
-    max_value=4.5, 
-    value=float(round(auto_threshold, 2)), 
-    step=0.05
+    min_value=2.0, 
+    max_value=5.0, 
+    value=default_threshold, 
+    step=0.1
 )
 
-# --- XỬ LÝ LOGIC TÌM THỜI GIAN NGẬP ---
+# --- XỬ LÝ LOGIC TÌM NHIỀU ĐIỂM NGẬP ---
+flood_events = pd.DataFrame()
 if not df_filtered.empty:
-    # Tìm vị trí (index) có mực nước dự báo cao nhất trong khoảng thời gian đã lọc
-    max_pred_idx = df_filtered['Lil-Mamba Prediction'].idxmax()
-    
-    # Lấy giá trị mực nước cao nhất
-    max_pred_level = df_filtered.loc[max_pred_idx, 'Lil-Mamba Prediction']
-    
-    # Lấy thời gian tương ứng
-    peak_time = df_filtered.loc[max_pred_idx, 'Time']
-    
-    # Kiểm tra xem có vượt ngưỡng không
-    is_flooding = max_pred_level > flood_threshold
+    # Lọc ra tất cả các thời điểm vượt ngưỡng
+    flood_events = df_filtered[df_filtered['Lil-Mamba Prediction'] > flood_threshold].copy()
+    is_flooding = not flood_events.empty
 else:
     is_flooding = False
-    max_pred_level = 0
-    peak_time = pd.Timestamp.now()
 
 st.sidebar.markdown("---")
 st.sidebar.info(
@@ -138,16 +124,30 @@ st.sidebar.info(
 st.title("🌊 Mersey MetOcean Data Analysis 2025 (Lil-Mamba Model)")
 st.markdown(f"**Viewing Data:** `{start_date}` to `{end_date}`")
 
-# --- HỘP CẢNH BÁO (ALERT BOX) - ĐÃ THÊM GIỜ ---
+# --- HỘP CẢNH BÁO CHI TIẾT (MULTIPLE ALERTS) ---
 if is_flooding:
+    # Thống kê nhanh
+    num_hours = len(flood_events)
+    max_level = flood_events['Lil-Mamba Prediction'].max()
+    
     st.error(
-        f"🚨 **DANGER: FLOOD WARNING!**\n\n"
-        f"🌊 **Peak Level:** {max_pred_level:.2f} m\n"
-        f"🕒 **Time of Occurrence:** {peak_time.strftime('%H:%M %d/%m/%Y')}\n"
-        f"⚠️ **Status:** Exceeds safety threshold ({flood_threshold} m)"
+        f"🚨 **DANGER: FLOOD WARNING DETECTED!**\n\n"
+        f"Found **{num_hours} hours** where water level exceeds **{flood_threshold}m**.\n"
+        f"🌊 **Highest Peak:** {max_level:.2f} m"
     )
+    
+    # Hiển thị danh sách các ngày giờ bị ngập
+    with st.expander("🔻 View Detailed Flood Times (Click to expand)", expanded=True):
+        # Format bảng cho đẹp
+        display_df = flood_events[['Time', 'Lil-Mamba Prediction']].copy()
+        display_df.columns = ['Time of Occurrence', 'Predicted Level (m)']
+        display_df['Predicted Level (m)'] = display_df['Predicted Level (m)'].map('{:.2f}'.format)
+        
+        # Highlight row có đỉnh lũ cao nhất
+        st.dataframe(display_df, use_container_width=True, height=200)
+
 else:
-    st.success(f"✅ **SAFE:** Water levels are within safe limits (Below {flood_threshold} m).")
+    st.success(f"✅ **SAFE:** No flood risk detected. Water levels are below {flood_threshold} m.")
 
 # --- KPI METRICS ---
 kpi1, kpi2, kpi3, kpi4 = st.columns(4)
@@ -186,7 +186,7 @@ with c2:
     p2 = ax2.plot(df_filtered['Time'], df_filtered['Lil-Mamba Prediction'], color='#d62728', label='Lil-Mamba Prediction', linestyle='--', linewidth=1.5)
     p3 = ax2.axhline(y=flood_threshold, color='red', linestyle='-', linewidth=2, label=f'Threshold ({flood_threshold}m)')
     
-    # Fix Y-Axis Top to 4.21m
+    # Fix Y-Axis Top to 4.21m (theo yêu cầu)
     ax2.set_ylim(top=4.21)
     
     ax2.set_ylabel('Sea Level (m)')

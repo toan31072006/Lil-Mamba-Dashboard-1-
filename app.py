@@ -159,7 +159,8 @@ st.markdown("---")
 # ====================================================
 st.subheader("Sea Level: Observed vs Lil-Mamba")
 
-fig_hero, ax_hero = plt.subplots(figsize=(12, 5))
+# --- CẬP NHẬT: GIẢM KÍCH THƯỚC ~30% (9x3.5) ---
+fig_hero, ax_hero = plt.subplots(figsize=(9, 3.5))
 
 # Draw Danger Zone
 ax_hero.axhspan(flood_threshold, 10, color='red', alpha=0.1, label='Flood Zone')
@@ -167,7 +168,7 @@ ax_hero.axhspan(flood_threshold, 10, color='red', alpha=0.1, label='Flood Zone')
 p1 = ax_hero.plot(df_filtered['Time'], df_filtered['Sea Surface Height'], color='#9467bd', label='Observed Sea Level', linewidth=4, alpha=0.5)
 p2 = ax_hero.plot(df_filtered['Time'], df_filtered['Lil-Mamba Prediction'], color='#d62728', label='Lil-Mamba Prediction', linestyle='--', linewidth=1.5)
 
-# --- CẬP NHẬT: NÉT LIỀN (SOLID) + MÀU CAM ---
+# Nét liền (Solid) + Màu Cam
 p3 = ax_hero.axhline(y=flood_threshold, color='#FF6600', linewidth=3, linestyle='-', label=f'Threshold ({flood_threshold}m)')
 
 # Fix Y-Axis Top
@@ -269,7 +270,6 @@ with c7:
     st.pyplot(fig8)
 
 with c8:
-    # --- ĐÃ KHÔI PHỤC: THEO THÁNG (MONTHLY) ---
     st.subheader("Monthly Avg Temp")
     monthly_temp = df.groupby('Month', sort=False)['Potential Temperature'].mean()
     

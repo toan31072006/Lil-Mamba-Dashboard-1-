@@ -158,24 +158,24 @@ st.markdown("---")
 # ====================================================
 st.subheader("Sea Level: Observed vs Lil-Mamba")
 
-# --- CẬP NHẬT: KÍCH THƯỚC SIÊU GỌN (5x2.5) ---
-fig_hero, ax_hero = plt.subplots(figsize=(5, 2.5))
+# --- CẬP NHẬT: KÍCH THƯỚC SIÊU BÉ (3x1.5) ---
+fig_hero, ax_hero = plt.subplots(figsize=(3, 1.5))
 
 # Draw Danger Zone
 ax_hero.axhspan(flood_threshold, 10, color='red', alpha=0.1, label='Flood Zone')
 
-p1 = ax_hero.plot(df_filtered['Time'], df_filtered['Sea Surface Height'], color='#9467bd', label='Observed Sea Level', linewidth=4, alpha=0.5)
-p2 = ax_hero.plot(df_filtered['Time'], df_filtered['Lil-Mamba Prediction'], color='#d62728', label='Lil-Mamba Prediction', linestyle='--', linewidth=1.5)
+p1 = ax_hero.plot(df_filtered['Time'], df_filtered['Sea Surface Height'], color='#9467bd', label='Observed Sea Level', linewidth=2, alpha=0.5)
+p2 = ax_hero.plot(df_filtered['Time'], df_filtered['Lil-Mamba Prediction'], color='#d62728', label='Lil-Mamba Prediction', linestyle='--', linewidth=1)
 
 # Nét liền + Màu Cam
-p3 = ax_hero.axhline(y=flood_threshold, color='#FF6600', linewidth=3, linestyle='-', label=f'Threshold ({flood_threshold}m)')
+p3 = ax_hero.axhline(y=flood_threshold, color='#FF6600', linewidth=2, linestyle='-', label=f'Threshold ({flood_threshold}m)')
 
 # Fix Y-Axis Top
 ax_hero.set_ylim(top=4.21)
 
-# --- THU NHỎ CHỮ ĐỒNG BỘ ---
-ax_hero.set_ylabel('Sea Level (m)', fontsize=7) # Chữ bé xíu
-ax_hero.tick_params(axis='both', which='major', labelsize=6) # Số bé xíu
+# --- THU NHỎ CHỮ ---
+ax_hero.set_ylabel('Sea Level (m)', fontsize=5)
+ax_hero.tick_params(axis='both', which='major', labelsize=4)
 
 lines = p1 + p2 + [p3]
 labels_legend = [l.get_label() for l in lines]
@@ -183,15 +183,15 @@ ax_hero.legend(
     lines, 
     labels_legend, 
     loc='upper center', 
-    bbox_to_anchor=(0.5, -0.4), # Đẩy xuống thấp hơn vì hình nhỏ
+    bbox_to_anchor=(0.5, -0.3), # Dịch lên (-0.4 -> -0.3)
     fancybox=True, 
     shadow=True, 
     ncol=3,
-    fontsize=6 # Chữ chú thích bé xíu
+    fontsize=4 # Chữ bé xíu
 )
 
 # Ngày tháng bé xíu + Nghiêng
-plt.xticks(rotation=30, fontsize=6) 
+plt.xticks(rotation=30, fontsize=4) 
 st.pyplot(fig_hero)
 
 st.markdown("---")

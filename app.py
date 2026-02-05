@@ -88,7 +88,7 @@ df_filtered = df.loc[mask]
 st.sidebar.markdown("---")
 st.sidebar.header("⚠️ Flood Warning System")
 
-# Cấu hình ngưỡng: Mặc định 3.7m theo yêu cầu
+# Cấu hình ngưỡng: Mặc định 3.7m
 default_threshold = 3.7
 
 st.sidebar.info(f"**Custom Threshold:** Fixed at {default_threshold}m")
@@ -104,7 +104,6 @@ flood_threshold = st.sidebar.slider(
 # --- XỬ LÝ LOGIC TÌM NHIỀU ĐIỂM NGẬP ---
 flood_events = pd.DataFrame()
 if not df_filtered.empty:
-    # Lọc ra tất cả các thời điểm vượt ngưỡng
     flood_events = df_filtered[df_filtered['Lil-Mamba Prediction'] > flood_threshold].copy()
     is_flooding = not flood_events.empty
 else:
@@ -124,9 +123,8 @@ st.sidebar.info(
 st.title("🌊 Mersey MetOcean Data Analysis 2025 (Lil-Mamba Model)")
 st.markdown(f"**Viewing Data:** `{start_date}` to `{end_date}`")
 
-# --- HỘP CẢNH BÁO CHI TIẾT (MULTIPLE ALERTS) ---
+# --- HỘP CẢNH BÁO CHI TIẾT (ĐÃ BỎ INDEX) ---
 if is_flooding:
-    # Thống kê nhanh
     num_hours = len(flood_events)
     max_level = flood_events['Lil-Mamba Prediction'].max()
     
@@ -138,13 +136,17 @@ if is_flooding:
     
     # Hiển thị danh sách các ngày giờ bị ngập
     with st.expander("🔻 View Detailed Flood Times (Click to expand)", expanded=True):
-        # Format bảng cho đẹp
         display_df = flood_events[['Time', 'Lil-Mamba Prediction']].copy()
         display_df.columns = ['Time of Occurrence', 'Predicted Level (m)']
         display_df['Predicted Level (m)'] = display_df['Predicted Level (m)'].map('{:.2f}'.format)
         
-        # Highlight row có đỉnh lũ cao nhất
-        st.dataframe(display_df, use_container_width=True, height=200)
+        # --- QUAN TRỌNG: hide_index=True để ẩn cột số thứ tự ---
+        st.dataframe(
+            display_df, 
+            use_container_width=True, 
+            height=200, 
+            hide_index=True  # <--- Đã thêm dòng này
+        )
 
 else:
     st.success(f"✅ **SAFE:** No flood risk detected. Water levels are below {flood_threshold} m.")
@@ -186,7 +188,7 @@ with c2:
     p2 = ax2.plot(df_filtered['Time'], df_filtered['Lil-Mamba Prediction'], color='#d62728', label='Lil-Mamba Prediction', linestyle='--', linewidth=1.5)
     p3 = ax2.axhline(y=flood_threshold, color='red', linestyle='-', linewidth=2, label=f'Threshold ({flood_threshold}m)')
     
-    # Fix Y-Axis Top to 4.21m (theo yêu cầu)
+    # Fix Y-Axis Top to 4.21m
     ax2.set_ylim(top=4.21)
     
     ax2.set_ylabel('Sea Level (m)')

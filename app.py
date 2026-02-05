@@ -157,9 +157,9 @@ st.markdown("---")
 # ====================================================
 # PHẦN 1: BIỂU ĐỒ QUAN TRỌNG NHẤT (HERO SECTION)
 # ====================================================
-st.subheader("Sea Level: Observed vs Lil-Mamba") # Đã xóa số thứ tự
+st.subheader("Sea Level: Observed vs Lil-Mamba")
 
-fig_hero, ax_hero = plt.subplots(figsize=(12, 5)) # Tăng kích thước
+fig_hero, ax_hero = plt.subplots(figsize=(12, 5))
 
 # Draw Danger Zone
 ax_hero.axhspan(flood_threshold, 10, color='red', alpha=0.1, label='Flood Zone')
@@ -167,7 +167,7 @@ ax_hero.axhspan(flood_threshold, 10, color='red', alpha=0.1, label='Flood Zone')
 p1 = ax_hero.plot(df_filtered['Time'], df_filtered['Sea Surface Height'], color='#9467bd', label='Observed Sea Level', linewidth=4, alpha=0.5)
 p2 = ax_hero.plot(df_filtered['Time'], df_filtered['Lil-Mamba Prediction'], color='#d62728', label='Lil-Mamba Prediction', linestyle='--', linewidth=1.5)
 
-# Nét liền màu cam
+# --- CẬP NHẬT: NÉT LIỀN (SOLID) + MÀU CAM ---
 p3 = ax_hero.axhline(y=flood_threshold, color='#FF6600', linewidth=3, linestyle='-', label=f'Threshold ({flood_threshold}m)')
 
 # Fix Y-Axis Top
@@ -186,7 +186,7 @@ st.markdown("---")
 # PHẦN 2: CÁC BIỂU ĐỒ CÒN LẠI (GRID LAYOUT)
 # ====================================================
 
-# --- HÀNG 1 (CÁC BIỂU ĐỒ PHỤ) ---
+# --- HÀNG 1 ---
 c1, c2, c3 = st.columns(3)
 
 with c1:
@@ -257,7 +257,7 @@ with c6:
 st.markdown("---")
 
 # --- HÀNG 3 ---
-c7, c8 = st.columns(2) # Chia 2 cột cho đẹp vì còn 2 biểu đồ
+c7, c8 = st.columns(2)
 
 with c7:
     st.subheader("Wave Direction vs Height")
@@ -269,13 +269,11 @@ with c7:
     st.pyplot(fig8)
 
 with c8:
-    st.subheader("Daily Avg Temp (Theo Ngày)")
-    daily_temp = df_filtered.groupby(df_filtered['Time'].dt.date)['Potential Temperature'].mean()
+    # --- ĐÃ KHÔI PHỤC: THEO THÁNG (MONTHLY) ---
+    st.subheader("Monthly Avg Temp")
+    monthly_temp = df.groupby('Month', sort=False)['Potential Temperature'].mean()
     
     fig9, ax9 = plt.subplots(figsize=(6, 4))
-    sns.barplot(x=daily_temp.index, y=daily_temp.values, ax=ax9, palette='magma')
-    ax9.set_xticklabels([d.strftime('%d-%m') for d in daily_temp.index], rotation=45)
-    
-    if not daily_temp.empty:
-        ax9.set_ylim(min(daily_temp.values)*0.95, max(daily_temp.values)*1.05)
+    sns.barplot(x=monthly_temp.index, y=monthly_temp.values, ax=ax9, palette='magma')
+    ax9.set_ylim(min(monthly_temp.values)*0.9, max(monthly_temp.values)*1.05)
     st.pyplot(fig9)

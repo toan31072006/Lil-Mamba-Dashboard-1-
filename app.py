@@ -158,14 +158,12 @@ st.markdown("---")
 # ====================================================
 st.subheader("Sea Level: Observed vs Lil-Mamba")
 
-# --- CẬP NHẬT: KÍCH THƯỚC (8x2.5) + DPI 600 ---
-# Kích thước này đủ rộng để không bị mờ, nhưng đủ thấp (2.5) để trông "nhỏ gọn"
-fig_hero, ax_hero = plt.subplots(figsize=(8, 2.5), dpi=600)
+# --- CẬP NHẬT: KÍCH THƯỚC (8x2.5) + DPI SIÊU CAO 1000 ---
+fig_hero, ax_hero = plt.subplots(figsize=(8, 2.5), dpi=1000)
 
 # Draw Danger Zone
 ax_hero.axhspan(flood_threshold, 10, color='red', alpha=0.1, label='Flood Zone')
 
-# Tăng linewidth để rõ nét hơn
 p1 = ax_hero.plot(df_filtered['Time'], df_filtered['Sea Surface Height'], color='#9467bd', label='Observed Sea Level', linewidth=2.5, alpha=0.5)
 p2 = ax_hero.plot(df_filtered['Time'], df_filtered['Lil-Mamba Prediction'], color='#d62728', label='Lil-Mamba Prediction', linestyle='--', linewidth=1.5)
 
@@ -175,7 +173,7 @@ p3 = ax_hero.axhline(y=flood_threshold, color='#FF6600', linewidth=2.5, linestyl
 # Fix Y-Axis Top
 ax_hero.set_ylim(top=4.21)
 
-# --- FONT CHỮ CÂN ĐỐI ---
+# --- FONT CHỮ ---
 ax_hero.set_ylabel('Sea Level (m)', fontsize=8)
 ax_hero.tick_params(axis='both', which='major', labelsize=7)
 
@@ -185,11 +183,11 @@ ax_hero.legend(
     lines, 
     labels_legend, 
     loc='upper center', 
-    bbox_to_anchor=(0.5, -0.3), # Vị trí hợp lý
+    bbox_to_anchor=(0.5, -0.3), 
     fancybox=True, 
     shadow=True, 
     ncol=3,
-    fontsize=7 # Font vừa đủ đọc
+    fontsize=7
 )
 
 # Ngày tháng nghiêng
@@ -207,8 +205,8 @@ c1, c2, c3 = st.columns(3)
 
 with c1:
     st.subheader("Seawater Temperature Evolution")
-    # Tăng DPI cho tất cả biểu đồ con
-    fig1, ax1 = plt.subplots(figsize=(6, 4), dpi=300)
+    # Tăng DPI lên 500 cho các biểu đồ con
+    fig1, ax1 = plt.subplots(figsize=(6, 4), dpi=500)
     ax1.plot(df_filtered['Time'], df_filtered['Potential Temperature'], label='Surface Temp', color='#ff7f0e', linewidth=2)
     ax1.plot(df_filtered['Time'], df_filtered['Bottom Temperature'], label='Bottom Temp', color='#1f77b4', linestyle='--', linewidth=2)
     ax1.set_ylabel('Temperature (°C)', fontsize=9)
@@ -221,7 +219,7 @@ with c2:
     st.subheader("Wave Direction Frequency")
     dir_order = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
     wave_counts = df_filtered['WaveDirCat'].value_counts().reindex(dir_order, fill_value=0)
-    fig3, ax3 = plt.subplots(figsize=(6, 4), dpi=300)
+    fig3, ax3 = plt.subplots(figsize=(6, 4), dpi=500)
     sns.barplot(x=wave_counts.index, y=wave_counts.values, ax=ax3, palette='viridis')
     ax3.set_ylabel('Count', fontsize=9)
     ax3.tick_params(labelsize=8)
@@ -229,7 +227,7 @@ with c2:
 
 with c3:
     st.subheader("Wind Speed (m/s)")
-    fig4, ax4 = plt.subplots(figsize=(6, 4), dpi=300)
+    fig4, ax4 = plt.subplots(figsize=(6, 4), dpi=500)
     ax4.plot(df_filtered['Time'], df_filtered['Wind Speed'], color='#d62728', linewidth=1.5)
     ax4.fill_between(df_filtered['Time'], df_filtered['Wind Speed'], color='#d62728', alpha=0.1)
     ax4.set_ylabel('Speed (m/s)', fontsize=9)
@@ -244,7 +242,7 @@ c4, c5, c6 = st.columns(3)
 
 with c4:
     st.subheader("Atmospheric Pressure (Pa)")
-    fig5, ax5 = plt.subplots(figsize=(6, 4), dpi=300)
+    fig5, ax5 = plt.subplots(figsize=(6, 4), dpi=500)
     ax5.plot(df_filtered['Time'], df_filtered['Mean Sea Level Pressure'], color='#8c564b', linewidth=2)
     ax5.set_ylabel('Pressure (Pa)', fontsize=9)
     ax5.tick_params(labelsize=8)
@@ -256,7 +254,7 @@ with c5:
     sea_counts = df_filtered['SeaStateCat'].value_counts().sort_index()
     sea_counts = sea_counts[sea_counts > 0]
     
-    fig6, ax6 = plt.subplots(figsize=(6, 4), dpi=300)
+    fig6, ax6 = plt.subplots(figsize=(6, 4), dpi=500)
     colors = sns.color_palette('Blues', len(sea_counts))
     wedges, texts, autotexts = ax6.pie(sea_counts, labels=None, autopct='%1.1f%%', startangle=140, colors=colors, pctdistance=0.85)
     ax6.legend(wedges, sea_counts.index, title="Sea States", loc="center left", bbox_to_anchor=(1, 0, 0.5, 1), fontsize='small')
@@ -268,7 +266,7 @@ with c6:
     df['Hour'] = df['Time'].dt.hour
     hourly_stats = df.groupby('Hour')[['Potential Temperature']].mean()
     
-    fig7, ax7 = plt.subplots(figsize=(6, 4), dpi=300)
+    fig7, ax7 = plt.subplots(figsize=(6, 4), dpi=500)
     ax7.plot(hourly_stats.index, hourly_stats['Potential Temperature'], marker='o', color='#ff7f0e')
     ax7.set_xlabel('Hour (0-23)', fontsize=9)
     ax7.set_ylabel('Temp (°C)', fontsize=9)
@@ -282,7 +280,7 @@ c7, c8 = st.columns(2)
 
 with c7:
     st.subheader("Wave Direction vs Height")
-    fig8, ax8 = plt.subplots(figsize=(6, 4), dpi=300)
+    fig8, ax8 = plt.subplots(figsize=(6, 4), dpi=500)
     scatter = ax8.scatter(df['Mean Wave Direction'], df['Significant Wave Height'], alpha=0.5, s=15, c=df['Significant Wave Height'], cmap='viridis')
     ax8.set_xlabel('Direction (°)', fontsize=9)
     ax8.set_ylabel('Height (m)', fontsize=9)
@@ -294,7 +292,7 @@ with c8:
     st.subheader("Monthly Avg Temp")
     monthly_temp = df.groupby('Month', sort=False)['Potential Temperature'].mean()
     
-    fig9, ax9 = plt.subplots(figsize=(6, 4), dpi=300)
+    fig9, ax9 = plt.subplots(figsize=(6, 4), dpi=500)
     sns.barplot(x=monthly_temp.index, y=monthly_temp.values, ax=ax9, palette='magma')
     ax9.set_ylim(min(monthly_temp.values)*0.9, max(monthly_temp.values)*1.05)
     ax9.tick_params(labelsize=8)

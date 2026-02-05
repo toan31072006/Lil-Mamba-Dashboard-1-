@@ -85,16 +85,15 @@ c1, c2 = st.sidebar.columns(2)
 with c1:
     sea_start_date = st.date_input("Date", min_db_date, key='sea_start_d')
 with c2:
-    sea_start_time = st.number_input("Hour (0-23)", 0, 23, 14, key='sea_start_t') # Mặc định 14h
+    sea_start_time = st.number_input("Hour (0-23)", 0, 23, 14, key='sea_start_t')
 
 # --- KẾT THÚC ---
 st.sidebar.markdown("**End Time:**")
 c3, c4 = st.sidebar.columns(2)
 with c3:
-    # Mặc định ngày kết thúc là ngày hôm sau
     sea_end_date = st.date_input("Date", min_db_date + timedelta(days=1), key='sea_end_d')
 with c4:
-    sea_end_time = st.number_input("Hour (0-23)", 0, 23, 14, key='sea_end_t') # Mặc định 14h
+    sea_end_time = st.number_input("Hour (0-23)", 0, 23, 14, key='sea_end_t')
 
 # Tính toán Timestamp
 dt_start_obs = datetime.combine(sea_start_date, time(sea_start_time, 0))
@@ -103,7 +102,6 @@ dt_end_obs = datetime.combine(sea_end_date, time(sea_end_time, 0))
 # Validate
 if dt_start_obs >= dt_end_obs:
     st.sidebar.error("⚠️ Lỗi: Thời gian Bắt đầu phải nhỏ hơn Kết thúc!")
-    # Fallback an toàn để không crash app
     dt_end_obs = dt_start_obs + timedelta(hours=24)
 
 # Tính toán End Prediction (+3h sau khi kết thúc quan trắc)
@@ -145,7 +143,7 @@ flood_threshold = st.sidebar.slider(
     step=0.1
 )
 
-# Logic tìm điểm ngập (Dựa trên dữ liệu tổng quan)
+# Logic tìm điểm ngập
 flood_events = pd.DataFrame()
 if not df_general.empty:
     flood_events = df_general[df_general['Lil-Mamba Prediction'] > flood_threshold].copy()
@@ -209,7 +207,7 @@ st.markdown("---")
 c_pad1, c_hero, c_pad2 = st.columns([1, 6, 1]) 
 
 with c_hero:
-    # Tiêu đề linh hoạt theo input
+    # Tiêu đề
     title_time = f"{dt_start_obs.strftime('%Hh %d/%m')} ➝ {dt_end_obs.strftime('%Hh %d/%m')} (Observed)"
     st.subheader(f"Sea Level: {title_time}")
 
@@ -218,10 +216,19 @@ with c_hero:
     # 1. Draw Danger Zone
     ax_hero.axhspan(flood_threshold, 10, color='red', alpha=0.1, label='Flood Zone')
 
-    # 2. Observed Data (Theo khoảng user chọn)
-    p1 = ax_hero.plot(df_obs['Time'], df_obs['Sea Surface Height'], color='#9467bd', label='Observed Sea Level', linewidth=2.5, alpha=0.8)
+    # 2. Observed Data - CÓ MARKER (Chấm tròn)
+    p1 = ax_hero.plot(
+        df_obs['Time'], 
+        df_obs['Sea Surface Height'], 
+        color='#9467bd', 
+        label='Observed Sea Level', 
+        linewidth=2.5, 
+        alpha=0.8,
+        marker='o',      # <--- Thêm chấm tròn
+        markersize=4     # Kích thước chấm
+    )
     
-    # 3. Forecast Data (3h tiếp theo) - Nét đứt DÀY/NHIỀU
+    # 3. Forecast Data - CÓ MARKER & NÉT ĐỨT DÀY
     if not df_obs.empty and not df_pred.empty:
         last_obs = df_obs.iloc[[-1]]
         df_pred_plot = pd.concat([last_obs, df_pred])
@@ -231,7 +238,9 @@ with c_hero:
             color='#d62728', 
             label='Lil-Mamba Prediction', 
             linewidth=2.5,
-            dashes=(3, 1) # Nét đứt dày
+            dashes=(3, 1),
+            marker='o',      # <--- Thêm chấm tròn
+            markersize=4     # Kích thước chấm
         )
     else:
         p2 = ax_hero.plot(
@@ -240,7 +249,9 @@ with c_hero:
             color='#d62728', 
             label='Lil-Mamba Prediction', 
             linewidth=2.5,
-            dashes=(3, 1)
+            dashes=(3, 1),
+            marker='o',      # <--- Thêm chấm tròn
+            markersize=4
         )
 
     # 4. Threshold Line
@@ -253,7 +264,7 @@ with c_hero:
     ax_hero.set_ylabel('Sea Level (m)', fontsize=9)
     ax_hero.tick_params(axis='both', which='major', labelsize=8)
 
-    # Legend ĐƠN GIẢN
+    # Legend
     lines = p1 + p2 + [p3]
     labels_legend = [l.get_label() for l in lines]
     ax_hero.legend(

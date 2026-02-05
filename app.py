@@ -70,24 +70,43 @@ df = load_data()
 # --- 3. SIDEBAR CONTROLS ---
 st.sidebar.title("🎛️ Control Panel")
 
-# --- PHẦN 1: SEA LEVEL FILTER (24H WINDOW) ---
+# --- PHẦN 1: SEA LEVEL FILTER (FLEXIBLE WINDOW) ---
 st.sidebar.markdown("---")
-st.sidebar.header("1. Sea Level Forecast")
-st.sidebar.caption("Chọn thời gian BẮT ĐẦU (Start Time):")
+st.sidebar.header("1. Sea Level Config")
+st.sidebar.caption("Tùy chọn khoảng thời gian quan trắc:")
 
-# Mặc định lấy ngày đầu tiên trong dữ liệu
-min_date = df['Time'].min().date()
-max_date = df['Time'].max().date()
+# Lấy giới hạn dữ liệu
+min_db_date = df['Time'].min().date()
+max_db_date = df['Time'].max().date()
 
-sea_start_date = st.sidebar.date_input("Start Date", min_date, key='sea_date')
-sea_start_time = st.sidebar.slider("Start Hour (0-23h)", 0, 23, 7, key='sea_time') # Mặc định 07h như ví dụ
+# --- BẮT ĐẦU ---
+st.sidebar.markdown("**Start Time:**")
+c1, c2 = st.sidebar.columns(2)
+with c1:
+    sea_start_date = st.date_input("Date", min_db_date, key='sea_start_d')
+with c2:
+    sea_start_time = st.number_input("Hour (0-23)", 0, 23, 14, key='sea_start_t') # Mặc định 14h
 
-# Tính toán khung thời gian
-# Start: Ví dụ 07h ngày 01/01
+# --- KẾT THÚC ---
+st.sidebar.markdown("**End Time:**")
+c3, c4 = st.sidebar.columns(2)
+with c3:
+    # Mặc định ngày kết thúc là ngày hôm sau
+    sea_end_date = st.date_input("Date", min_db_date + timedelta(days=1), key='sea_end_d')
+with c4:
+    sea_end_time = st.number_input("Hour (0-23)", 0, 23, 14, key='sea_end_t') # Mặc định 14h
+
+# Tính toán Timestamp
 dt_start_obs = datetime.combine(sea_start_date, time(sea_start_time, 0))
-# End Observed (24h sau): 07h ngày 02/01
-dt_end_obs = dt_start_obs + timedelta(hours=24)
-# End Prediction (+3h nữa): 10h ngày 02/01
+dt_end_obs = datetime.combine(sea_end_date, time(sea_end_time, 0))
+
+# Validate
+if dt_start_obs >= dt_end_obs:
+    st.sidebar.error("⚠️ Lỗi: Thời gian Bắt đầu phải nhỏ hơn Kết thúc!")
+    # Fallback an toàn để không crash app
+    dt_end_obs = dt_start_obs + timedelta(hours=24)
+
+# Tính toán End Prediction (+3h sau khi kết thúc quan trắc)
 dt_end_pred = dt_end_obs + timedelta(hours=3)
 
 # Lọc dữ liệu
@@ -102,8 +121,8 @@ st.sidebar.markdown("---")
 st.sidebar.header("2. General Analysis")
 st.sidebar.caption("Khoảng thời gian cho các biểu đồ khác:")
 
-gen_start_date = st.sidebar.date_input("From Date", min_date, key='gen_start')
-gen_end_date = st.sidebar.date_input("To Date", min_date + pd.Timedelta(days=7), key='gen_end')
+gen_start_date = st.sidebar.date_input("From Date", min_db_date, key='gen_start')
+gen_end_date = st.sidebar.date_input("To Date", min_db_date + pd.Timedelta(days=7), key='gen_end')
 
 if gen_start_date > gen_end_date:
     st.sidebar.error("Error: Start Date must be before End Date.")
@@ -190,7 +209,7 @@ st.markdown("---")
 c_pad1, c_hero, c_pad2 = st.columns([1, 6, 1]) 
 
 with c_hero:
-    # Tiêu đề ĐÚNG YÊU CẦU: Chỉ ghi khoảng Observed
+    # Tiêu đề linh hoạt theo input
     title_time = f"{dt_start_obs.strftime('%Hh %d/%m')} ➝ {dt_end_obs.strftime('%Hh %d/%m')} (Observed)"
     st.subheader(f"Sea Level: {title_time}")
 
@@ -199,7 +218,7 @@ with c_hero:
     # 1. Draw Danger Zone
     ax_hero.axhspan(flood_threshold, 10, color='red', alpha=0.1, label='Flood Zone')
 
-    # 2. Observed Data (24h)
+    # 2. Observed Data (Theo khoảng user chọn)
     p1 = ax_hero.plot(df_obs['Time'], df_obs['Sea Surface Height'], color='#9467bd', label='Observed Sea Level', linewidth=2.5, alpha=0.8)
     
     # 3. Forecast Data (3h tiếp theo) - Nét đứt DÀY/NHIỀU

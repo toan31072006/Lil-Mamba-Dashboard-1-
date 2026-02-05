@@ -181,8 +181,11 @@ if is_flooding:
     
     with st.expander("🔻 View Detailed Flood Times (Click to expand)", expanded=True):
         display_df = flood_events[['Time', 'Lil-Mamba Prediction']].copy()
-        display_df.columns = ['Time of Occurrence', 'Predicted Level (m)']
-        display_df['Predicted Level (m)'] = display_df['Predicted Level (m)'].map('{:.2f}'.format)
+        
+        # --- CHANGED HERE: Column name from 'Predicted Level' to 'Sea Level' ---
+        display_df.columns = ['Time of Occurrence', 'Sea Level (m)']
+        
+        display_df['Sea Level (m)'] = display_df['Sea Level (m)'].map('{:.2f}'.format)
         
         st.dataframe(
             display_df, 

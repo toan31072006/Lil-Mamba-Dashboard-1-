@@ -157,16 +157,16 @@ st.markdown("---")
 # PHẦN 1: BIỂU ĐỒ QUAN TRỌNG NHẤT (HERO SECTION)
 # ====================================================
 
-# --- KỸ THUẬT CHIA CỘT ĐỂ THU NHỎ ---
-# Tỷ lệ [1, 3, 1] nghĩa là cột giữa chiếm 3/5 (60%) chiều rộng, 2 bên là khoảng trắng.
-c_pad1, c_hero, c_pad2 = st.columns([1, 3, 1]) 
+# --- ĐIỀU CHỈNH TỶ LỆ CỘT: TO HƠN 30% ---
+# Tỷ lệ [1, 6, 1] -> Cột giữa chiếm 6/8 = 75% chiều rộng (lúc trước là 60%)
+c_pad1, c_hero, c_pad2 = st.columns([1, 6, 1]) 
 
 with c_hero:
     st.subheader("Sea Level: Observed vs Lil-Mamba")
 
-    # Giờ dùng kích thước chuẩn (ko cần quá bé), vì cột đã ép nó nhỏ lại rồi
+    # Tăng nhẹ figsize để phù hợp với khung rộng hơn
     # DPI 1000 cho nét căng
-    fig_hero, ax_hero = plt.subplots(figsize=(6, 3.5), dpi=1000)
+    fig_hero, ax_hero = plt.subplots(figsize=(7, 3.5), dpi=1000)
 
     # Draw Danger Zone
     ax_hero.axhspan(flood_threshold, 10, color='red', alpha=0.1, label='Flood Zone')
@@ -180,7 +180,7 @@ with c_hero:
     # Fix Y-Axis Top
     ax_hero.set_ylim(top=4.21)
 
-    # Font chữ vừa phải (không cần quá bé vì hình đã được hiển thị chuẩn)
+    # Font chữ
     ax_hero.set_ylabel('Sea Level (m)', fontsize=9)
     ax_hero.tick_params(axis='both', which='major', labelsize=8)
 

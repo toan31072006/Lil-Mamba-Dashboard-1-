@@ -212,59 +212,58 @@ with c_hero:
 
     fig_hero, ax_hero = plt.subplots(figsize=(7, 3.5), dpi=2500)
 
+    # --- CẤU HÌNH MARKER MỚI (VÀNG NHẠT) ---
+    # Style cho việc vẽ chấm riêng biệt (không vẽ dòng)
+    marker_style_yellow = dict(
+        marker='o',
+        markersize=5,
+        markerfacecolor='#FFFF99', # Vàng nhạt
+        markeredgecolor='black',   # Viền đen mỏng để nổi bật
+        markeredgewidth=0.5,
+        linestyle='None'           # Quan trọng: Chỉ vẽ chấm, không vẽ đường
+    )
+
     # 1. Draw Danger Zone
     ax_hero.axhspan(flood_threshold, 10, color='red', alpha=0.1, label='Flood Zone')
 
-    # --- CẤU HÌNH MARKER (CHẤM ĐEN VIỀN TRẮNG) ---
-    marker_style = dict(
-        marker='o',
-        markersize=5,           # Kích thước chấm
-        markerfacecolor='black',# Màu ruột chấm: ĐEN
-        markeredgecolor='white',# Màu viền chấm: TRẮNG (để tách biệt với đường line)
-        markeredgewidth=0.5     # Độ dày viền
-    )
-
-    # 2. Observed Data
-    p1 = ax_hero.plot(
+    # 2. VẼ ĐƯỜNG (LINES) TRƯỚC - KHÔNG CÓ MARKER
+    p1_line = ax_hero.plot(
         df_obs['Time'], 
         df_obs['Sea Surface Height'], 
         color='#9467bd', 
         label='Observed Sea Level', 
         linewidth=2.5, 
         alpha=0.8,
-        **marker_style # Áp dụng style chấm
+        marker=None # Không chấm
     )
     
-    # 3. Forecast Data
     if not df_obs.empty and not df_pred.empty:
         last_obs = df_obs.iloc[[-1]]
-        df_pred_plot = pd.concat([last_obs, df_pred])
-        p2 = ax_hero.plot(
-            df_pred_plot['Time'], 
-            df_pred_plot['Lil-Mamba Prediction'], 
+        # Tạo data nối để vẽ liền mạch
+        df_pred_plot_line = pd.concat([last_obs, df_pred])
+        p2_line = ax_hero.plot(
+            df_pred_plot_line['Time'], 
+            df_pred_plot_line['Lil-Mamba Prediction'], 
             color='#d62728', 
             label='Lil-Mamba Prediction', 
             linewidth=2.5,
             dashes=(3, 1),
-            **marker_style # Áp dụng style chấm
+            marker=None # Không chấm
         )
-    else:
-        p2 = ax_hero.plot(
-            df_pred['Time'], 
-            df_pred['Lil-Mamba Prediction'], 
-            color='#d62728', 
-            label='Lil-Mamba Prediction', 
-            linewidth=2.5,
-            dashes=(3, 1),
-            **marker_style
-        )
+        
+        # 3. VẼ CHẤM (MARKERS) SAU - XỬ LÝ GIAO ĐIỂM 1 CHẤM
+        # Vẽ toàn bộ chấm cho phần Observed (bao gồm cả điểm cuối cùng)
+        ax_hero.plot(df_obs['Time'], df_obs['Sea Surface Height'], **marker_style_yellow)
+
+        # Vẽ chấm cho phần Prediction, NHƯNG BỎ ĐIỂM ĐẦU TIÊN (vì đã được vẽ ở trên)
+        # df_pred chính là dữ liệu dự báo không bao gồm điểm nối, nên vẽ thẳng nó.
+        ax_hero.plot(df_pred['Time'], df_pred['Lil-Mamba Prediction'], **marker_style_yellow)
 
     # 4. Threshold Line
-    p3 = ax_hero.axhline(y=flood_threshold, color='#FF6600', linewidth=2.5, linestyle='-', label=f'Threshold ({flood_threshold}m)')
+    p3_line = ax_hero.axhline(y=flood_threshold, color='#FF6600', linewidth=2.5, linestyle='-', label=f'Threshold ({flood_threshold}m)')
 
-    # --- TẠO CHÚ THÍCH RIÊNG CHO CHẤM ĐEN ---
-    # Vẽ một điểm giả (dummy plot) để hiển thị trong legend
-    p_dot, = ax_hero.plot([], [], linestyle='None', label='Hourly Data Point', **marker_style)
+    # --- TẠO CHÚ THÍCH RIÊNG CHO CHẤM VÀNG ---
+    p_dot, = ax_hero.plot([], [], label='Hourly Data Point', **marker_style_yellow)
 
     # Fix Y-Axis Top
     ax_hero.set_ylim(top=4.21)
@@ -273,10 +272,9 @@ with c_hero:
     ax_hero.set_ylabel('Sea Level (m)', fontsize=9)
     ax_hero.tick_params(axis='both', which='major', labelsize=8)
 
-    # Legend (Thêm p_dot vào danh sách)
-    lines = p1 + p2 + [p3] + [p_dot]
+    # Legend
+    lines = p1_line + p2_line + [p3_line] + [p_dot]
     labels_legend = [l.get_label() for l in lines]
-    
     ax_hero.legend(
         lines, 
         labels_legend, 
@@ -284,7 +282,7 @@ with c_hero:
         bbox_to_anchor=(0.5, -0.25), 
         fancybox=True, 
         shadow=True, 
-        ncol=4, # Tăng lên 4 cột để chứa thêm chú thích chấm
+        ncol=4,
         fontsize=8
     )
 

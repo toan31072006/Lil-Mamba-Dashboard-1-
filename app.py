@@ -158,8 +158,8 @@ st.markdown("---")
 # ====================================================
 st.subheader("Sea Level: Observed vs Lil-Mamba")
 
-# --- CẬP NHẬT: KÍCH THƯỚC (8x2.5) + DPI SIÊU CAO 1000 ---
-fig_hero, ax_hero = plt.subplots(figsize=(8, 2.5), dpi=1000)
+# --- CẬP NHẬT: DPI = 2000 (ULTRA SHARP) ---
+fig_hero, ax_hero = plt.subplots(figsize=(8, 2.5), dpi=2000)
 
 # Draw Danger Zone
 ax_hero.axhspan(flood_threshold, 10, color='red', alpha=0.1, label='Flood Zone')
@@ -205,7 +205,7 @@ c1, c2, c3 = st.columns(3)
 
 with c1:
     st.subheader("Seawater Temperature Evolution")
-    # Tăng DPI lên 500 cho các biểu đồ con
+    # Tăng DPI lên 500
     fig1, ax1 = plt.subplots(figsize=(6, 4), dpi=500)
     ax1.plot(df_filtered['Time'], df_filtered['Potential Temperature'], label='Surface Temp', color='#ff7f0e', linewidth=2)
     ax1.plot(df_filtered['Time'], df_filtered['Bottom Temperature'], label='Bottom Temp', color='#1f77b4', linestyle='--', linewidth=2)

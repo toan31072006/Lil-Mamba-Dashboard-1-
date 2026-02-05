@@ -70,26 +70,41 @@ df = load_data()
 # --- 3. SIDEBAR CONTROLS ---
 st.sidebar.title("🎛️ Control Panel")
 
-# --- PART 1: SEA LEVEL FILTER (FIXED 24H WINDOW) ---
+# --- PART 1: SEA LEVEL FILTER (FLEXIBLE WINDOW) ---
 st.sidebar.markdown("---")
-st.sidebar.header("1. Sea Level Config (24h Window)")
-st.sidebar.caption("Select Start Time (Duration is fixed to 24h):")
+st.sidebar.header("1. Sea Level Config")
+st.sidebar.caption("Select Observation Window:") 
 
 min_db_date = df['Time'].min().date()
 max_db_date = df['Time'].max().date()
 
-# --- START TIME ONLY ---
+# --- START TIME ---
+st.sidebar.markdown("**Start Time:**")
 c1, c2 = st.sidebar.columns(2)
 with c1:
-    sea_start_date = st.date_input("Start Date", min_db_date, key='sea_start_d')
+    sea_start_date = st.date_input("Date", min_db_date, key='sea_start_d')
 with c2:
-    sea_start_time = st.number_input("Start Hour (0-23)", 0, 23, 14, key='sea_start_t')
+    sea_start_time = st.number_input("Hour (0-23)", 0, 23, 14, key='sea_start_t')
 
-# --- CALCULATE TIME RANGE (FIXED 24 HOURS) ---
+# --- END TIME ---
+st.sidebar.markdown("**End Time:**")
+c3, c4 = st.sidebar.columns(2)
+with c3:
+    sea_end_date = st.date_input("Date", min_db_date + timedelta(days=1), key='sea_end_d')
+with c4:
+    sea_end_time = st.number_input("Hour (0-23)", 0, 23, 14, key='sea_end_t')
+
+# Calculate Timestamp
 dt_start_obs = datetime.combine(sea_start_date, time(sea_start_time, 0))
-dt_end_obs = dt_start_obs + timedelta(hours=24) # Fixed 24h window
+dt_end_obs = datetime.combine(sea_end_date, time(sea_end_time, 0))
+
+# Validate
+if dt_start_obs >= dt_end_obs:
+    st.sidebar.error("⚠️ Error: Start Time must be before End Time!")
+    dt_end_obs = dt_start_obs + timedelta(hours=24)
 
 # Calculate End Prediction (+2h after observation ends)
+# --- UPDATED: CHANGED FROM 3 TO 2 HOURS ---
 dt_end_pred = dt_end_obs + timedelta(hours=2)
 
 # Filter Data
@@ -166,11 +181,8 @@ if is_flooding:
     
     with st.expander("🔻 View Detailed Flood Times (Click to expand)", expanded=True):
         display_df = flood_events[['Time', 'Lil-Mamba Prediction']].copy()
-        
-        # --- CHANGED HERE: Column name from 'Predicted Level' to 'Sea Level' ---
-        display_df.columns = ['Time of Occurrence', 'Sea Level (m)']
-        
-        display_df['Sea Level (m)'] = display_df['Sea Level (m)'].map('{:.2f}'.format)
+        display_df.columns = ['Time of Occurrence', 'Predicted Level (m)']
+        display_df['Predicted Level (m)'] = display_df['Predicted Level (m)'].map('{:.2f}'.format)
         
         st.dataframe(
             display_df, 

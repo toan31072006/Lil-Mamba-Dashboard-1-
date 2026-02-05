@@ -26,7 +26,9 @@ def load_data():
         dates = pd.date_range(start='2025-01-01', periods=744, freq='H') 
         df = pd.DataFrame({
             'Time': dates,
-            'Sea Surface Height': 3 * np.sin(np.linspace(0, 30*np.pi, 744)) + 30,
+            # CHỈNH SỬA: Giảm mức nền từ 30 xuống 2 để phù hợp với ngưỡng cảnh báo 3.7m
+            # Range bây giờ sẽ khoảng từ -1m đến 5m
+            'Sea Surface Height': 3 * np.sin(np.linspace(0, 30*np.pi, 744)) + 2, 
             'Significant Wave Height': np.random.gamma(2, 1, 744),
             '10m u-component of wind': np.random.normal(0, 5, 744),
             '10m v-component of wind': np.random.normal(0, 5, 744),
@@ -70,41 +72,26 @@ df = load_data()
 # --- 3. SIDEBAR CONTROLS ---
 st.sidebar.title("🎛️ Control Panel")
 
-# --- PART 1: SEA LEVEL FILTER (FLEXIBLE WINDOW) ---
+# --- PART 1: SEA LEVEL FILTER (FIXED 24H WINDOW) ---
 st.sidebar.markdown("---")
-st.sidebar.header("1. Sea Level Config")
-st.sidebar.caption("Select Observation Window:") 
+st.sidebar.header("1. Sea Level Config (24h Window)")
+st.sidebar.caption("Select Start Time (Duration is fixed to 24h):")
 
 min_db_date = df['Time'].min().date()
 max_db_date = df['Time'].max().date()
 
-# --- START TIME ---
-st.sidebar.markdown("**Start Time:**")
+# --- START TIME ONLY ---
 c1, c2 = st.sidebar.columns(2)
 with c1:
-    sea_start_date = st.date_input("Date", min_db_date, key='sea_start_d')
+    sea_start_date = st.date_input("Start Date", min_db_date, key='sea_start_d')
 with c2:
-    sea_start_time = st.number_input("Hour (0-23)", 0, 23, 14, key='sea_start_t')
+    sea_start_time = st.number_input("Start Hour (0-23)", 0, 23, 14, key='sea_start_t')
 
-# --- END TIME ---
-st.sidebar.markdown("**End Time:**")
-c3, c4 = st.sidebar.columns(2)
-with c3:
-    sea_end_date = st.date_input("Date", min_db_date + timedelta(days=1), key='sea_end_d')
-with c4:
-    sea_end_time = st.number_input("Hour (0-23)", 0, 23, 14, key='sea_end_t')
-
-# Calculate Timestamp
+# --- CALCULATE TIME RANGE (FIXED 24 HOURS) ---
 dt_start_obs = datetime.combine(sea_start_date, time(sea_start_time, 0))
-dt_end_obs = datetime.combine(sea_end_date, time(sea_end_time, 0))
-
-# Validate
-if dt_start_obs >= dt_end_obs:
-    st.sidebar.error("⚠️ Error: Start Time must be before End Time!")
-    dt_end_obs = dt_start_obs + timedelta(hours=24)
+dt_end_obs = dt_start_obs + timedelta(hours=24) # Fixed 24h window
 
 # Calculate End Prediction (+2h after observation ends)
-# --- UPDATED: CHANGED FROM 3 TO 2 HOURS ---
 dt_end_pred = dt_end_obs + timedelta(hours=2)
 
 # Filter Data
@@ -143,14 +130,6 @@ flood_threshold = st.sidebar.slider(
     step=0.1
 )
 
-# Flood Logic
-flood_events = pd.DataFrame()
-if not df_general.empty:
-    flood_events = df_general[df_general['Lil-Mamba Prediction'] > flood_threshold].copy()
-    is_flooding = not flood_events.empty
-else:
-    is_flooding = False
-
 st.sidebar.markdown("---")
 st.sidebar.info(
     """
@@ -165,31 +144,6 @@ st.sidebar.info(
 st.title("🌊 Mersey MetOcean Data Analysis 2025 (Lil-Mamba Model)")
 st.markdown(f"**General View:** `{gen_start_date}` to `{gen_end_date}`")
 
-# --- ALERT BOX ---
-if is_flooding:
-    num_hours = len(flood_events)
-    max_level = flood_events['Lil-Mamba Prediction'].max()
-    
-    st.error(
-        f"🚨 **DANGER: FLOOD WARNING DETECTED (In General View)!**\n\n"
-        f"Found **{num_hours} hours** where water level exceeds **{flood_threshold}m**.\n"
-        f"🌊 **Highest Peak:** {max_level:.2f} m"
-    )
-    
-    with st.expander("🔻 View Detailed Flood Times (Click to expand)", expanded=True):
-        display_df = flood_events[['Time', 'Lil-Mamba Prediction']].copy()
-        display_df.columns = ['Time of Occurrence', 'Predicted Level (m)']
-        display_df['Predicted Level (m)'] = display_df['Predicted Level (m)'].map('{:.2f}'.format)
-        
-        st.dataframe(
-            display_df, 
-            use_container_width=True, 
-            height=200, 
-            hide_index=True 
-        )
-else:
-    st.success(f"✅ **SAFE:** No flood risk detected. Water levels are below {flood_threshold} m.")
-
 # --- KPI METRICS ---
 kpi1, kpi2, kpi3, kpi4 = st.columns(4)
 kpi1.metric("Avg Sea Level", f"{df_general['Sea Surface Height'].mean():.2f} m")
@@ -203,11 +157,29 @@ st.markdown("---")
 # PART 1: SEA LEVEL CHART (HERO SECTION)
 # ====================================================
 
+# --- ALERT LOGIC (Based on HERO VIEW Data) ---
+# Combine observed and predicted data for the alert check
+current_view_df = pd.concat([df_obs, df_pred])
+# Check if ANY value in this window exceeds threshold
+flood_points = current_view_df[current_view_df['Lil-Mamba Prediction'] > flood_threshold]
+is_flooding_hero = not flood_points.empty
+
 # Layout [1, 6, 1]
 c_pad1, c_hero, c_pad2 = st.columns([1, 6, 1]) 
 
 with c_hero:
-    # --- UPDATED TITLE: REMOVED "(Observed)" ---
+    # --- ALERT MESSAGE ---
+    if is_flooding_hero:
+        max_val = flood_points['Lil-Mamba Prediction'].max()
+        peak_time = flood_points.loc[flood_points['Lil-Mamba Prediction'].idxmax(), 'Time']
+        st.error(
+            f"🚨 **FLOOD WARNING:** Water level exceeds **{flood_threshold}m** in this time window! "
+            f"(Peak: **{max_val:.2f}m** at {peak_time.strftime('%H:%M')})"
+        )
+    else:
+        st.success(f"✅ **SAFE:** Water levels are within safe limits (Below {flood_threshold}m)")
+
+    # Title
     title_time = f"{dt_start_obs.strftime('%Hh %d/%m')} ➝ {dt_end_obs.strftime('%Hh %d/%m')}"
     st.subheader(f"Sea Level: {title_time}")
 
@@ -226,8 +198,8 @@ with c_hero:
     # 1. Draw Danger Zone
     ax_hero.axhspan(flood_threshold, 10, color='red', alpha=0.1, label='Flood Zone')
 
-    # 2. DRAW LINES FIRST
-    # Observed Sea Level -> RED (#d62728)
+    # 2. DRAW LINES
+    # Observed Sea Level -> RED
     p1_line = ax_hero.plot(
         df_obs['Time'], 
         df_obs['Sea Surface Height'], 
@@ -243,7 +215,7 @@ with c_hero:
         # Concat for smooth connection
         df_pred_plot_line = pd.concat([last_obs, df_pred])
         
-        # Lil-Mamba Prediction -> PURPLE (#9467bd)
+        # Lil-Mamba Prediction -> PURPLE
         p2_line = ax_hero.plot(
             df_pred_plot_line['Time'], 
             df_pred_plot_line['Lil-Mamba Prediction'], 
@@ -259,7 +231,6 @@ with c_hero:
         ax_hero.plot(df_obs['Time'], df_obs['Sea Surface Height'], **marker_style_yellow)
         
         # B. Marker for Prediction (ONLY THE LAST POINT)
-        # --- UPDATED: ADD ONE DOT AT THE END OF PREDICTION ---
         last_pred_time = df_pred['Time'].iloc[-1]
         last_pred_val = df_pred['Lil-Mamba Prediction'].iloc[-1]
         ax_hero.plot(last_pred_time, last_pred_val, **marker_style_yellow)
@@ -267,11 +238,8 @@ with c_hero:
     # 4. Threshold Line
     p3_line = ax_hero.axhline(y=flood_threshold, color='#FF6600', linewidth=2.5, linestyle='-', label=f'Threshold ({flood_threshold}m)')
 
-    # --- UPDATED: REMOVED "Hourly Data Point" LEGEND ---
-    # (No p_dot created)
-
-    # Fix Y-Axis Top
-    ax_hero.set_ylim(top=4.21)
+    # Fix Y-Axis Top (Adjusted for realistic data range ~5m)
+    ax_hero.set_ylim(top=6.0) 
 
     # Fonts
     ax_hero.set_ylabel('Sea Level (m)', fontsize=9)
@@ -287,7 +255,7 @@ with c_hero:
         bbox_to_anchor=(0.5, -0.25), 
         fancybox=True, 
         shadow=True, 
-        ncol=3, # Adjusted back to 3 cols since we removed the dot legend
+        ncol=3,
         fontsize=8
     )
 

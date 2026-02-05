@@ -75,7 +75,6 @@ st.sidebar.markdown("---")
 st.sidebar.header("1. Sea Level Config")
 st.sidebar.caption("Tùy chọn khoảng thời gian quan trắc:")
 
-# Lấy giới hạn dữ liệu
 min_db_date = df['Time'].min().date()
 max_db_date = df['Time'].max().date()
 
@@ -216,7 +215,16 @@ with c_hero:
     # 1. Draw Danger Zone
     ax_hero.axhspan(flood_threshold, 10, color='red', alpha=0.1, label='Flood Zone')
 
-    # 2. Observed Data - CÓ MARKER (Chấm tròn)
+    # --- CẤU HÌNH MARKER (CHẤM ĐEN VIỀN TRẮNG) ---
+    marker_style = dict(
+        marker='o',
+        markersize=5,           # Kích thước chấm
+        markerfacecolor='black',# Màu ruột chấm: ĐEN
+        markeredgecolor='white',# Màu viền chấm: TRẮNG (để tách biệt với đường line)
+        markeredgewidth=0.5     # Độ dày viền
+    )
+
+    # 2. Observed Data
     p1 = ax_hero.plot(
         df_obs['Time'], 
         df_obs['Sea Surface Height'], 
@@ -224,11 +232,10 @@ with c_hero:
         label='Observed Sea Level', 
         linewidth=2.5, 
         alpha=0.8,
-        marker='o',      # <--- Thêm chấm tròn
-        markersize=4     # Kích thước chấm
+        **marker_style # Áp dụng style chấm
     )
     
-    # 3. Forecast Data - CÓ MARKER & NÉT ĐỨT DÀY
+    # 3. Forecast Data
     if not df_obs.empty and not df_pred.empty:
         last_obs = df_obs.iloc[[-1]]
         df_pred_plot = pd.concat([last_obs, df_pred])
@@ -239,8 +246,7 @@ with c_hero:
             label='Lil-Mamba Prediction', 
             linewidth=2.5,
             dashes=(3, 1),
-            marker='o',      # <--- Thêm chấm tròn
-            markersize=4     # Kích thước chấm
+            **marker_style # Áp dụng style chấm
         )
     else:
         p2 = ax_hero.plot(
@@ -250,12 +256,15 @@ with c_hero:
             label='Lil-Mamba Prediction', 
             linewidth=2.5,
             dashes=(3, 1),
-            marker='o',      # <--- Thêm chấm tròn
-            markersize=4
+            **marker_style
         )
 
     # 4. Threshold Line
     p3 = ax_hero.axhline(y=flood_threshold, color='#FF6600', linewidth=2.5, linestyle='-', label=f'Threshold ({flood_threshold}m)')
+
+    # --- TẠO CHÚ THÍCH RIÊNG CHO CHẤM ĐEN ---
+    # Vẽ một điểm giả (dummy plot) để hiển thị trong legend
+    p_dot, = ax_hero.plot([], [], linestyle='None', label='Hourly Data Point', **marker_style)
 
     # Fix Y-Axis Top
     ax_hero.set_ylim(top=4.21)
@@ -264,9 +273,10 @@ with c_hero:
     ax_hero.set_ylabel('Sea Level (m)', fontsize=9)
     ax_hero.tick_params(axis='both', which='major', labelsize=8)
 
-    # Legend
-    lines = p1 + p2 + [p3]
+    # Legend (Thêm p_dot vào danh sách)
+    lines = p1 + p2 + [p3] + [p_dot]
     labels_legend = [l.get_label() for l in lines]
+    
     ax_hero.legend(
         lines, 
         labels_legend, 
@@ -274,7 +284,7 @@ with c_hero:
         bbox_to_anchor=(0.5, -0.25), 
         fancybox=True, 
         shadow=True, 
-        ncol=3,
+        ncol=4, # Tăng lên 4 cột để chứa thêm chú thích chấm
         fontsize=8
     )
 

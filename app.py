@@ -181,8 +181,9 @@ with c2:
     p1 = ax2.plot(df_filtered['Time'], df_filtered['Sea Surface Height'], color='#9467bd', label='Observed Sea Level', linewidth=4, alpha=0.5)
     p2 = ax2.plot(df_filtered['Time'], df_filtered['Lil-Mamba Prediction'], color='#d62728', label='Lil-Mamba Prediction', linestyle='--', linewidth=1.5)
     
-    # --- CẬP NHẬT: NÉT ĐỨT + MÀU ĐEN (DỄ NHÌN) ---
-    p3 = ax2.axhline(y=flood_threshold, color='black', linestyle='--', linewidth=2.5, label=f'Threshold ({flood_threshold}m)')
+    # --- CẬP NHẬT: MÀU CAM + NÉT ĐỨT RẤT THƯA ---
+    # dashes=(5, 25): Vẽ 5 điểm, nghỉ 25 điểm -> Siêu thưa
+    p3 = ax2.axhline(y=flood_threshold, color='#FF6600', linewidth=3, dashes=(5, 25), label=f'Threshold ({flood_threshold}m)')
     
     # Fix Y-Axis Top to 4.21m
     ax2.set_ylim(top=4.21)
